@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # SIMULADOR DE RENTA VITALICIA Y TEMPORAL EN SHINY
-# Autor: Gemini
+# Autor: Arturo Chian
 # Descripción: Una aplicación para simular planes de pensión basados en
 # un fondo inicial, rentabilidad y definiendo la pensión o la duración.
 # -----------------------------------------------------------------------------
@@ -87,6 +87,21 @@ ui <- fluidPage(
                 )
             )
         )
+    ),
+    fluidRow(
+      column(12,
+          wellPanel(
+              h4("Sobre esta Aplicación"),
+              p("Esta aplicación te permite simular planes de jubilación (renta vitalicia y temporal) basados en un fondo acumulado en tu AFP."),
+              p("Puedes definir una pensión mensual deseada para ver cuántos años duraría tu fondo, o definir los años de jubilación que deseas para calcular la pensión que recibirías."),
+              hr(),
+              p("Desarrollado por Arturo Chian.", style = "font-style: italic;"),
+              p("Visita mi sitio web o contáctame en LinkedIn:"),
+              tags$a(href = "http://arturochian.com", target = "_blank", "arturochian.com"),
+              " | ",
+              tags$a(href = "https://www.linkedin.com/in/arturo-benjamin-chian-nuñez-frm-ba73965b", target = "_blank", "LinkedIn")
+          )
+      )
     )
 )
 
