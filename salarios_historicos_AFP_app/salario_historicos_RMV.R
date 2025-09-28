@@ -31,8 +31,8 @@ sheet_names <- readxl::excel_sheets("data_salarios.xlsx")
 excluded_sheets <- c("INTEGRA", "Tabla de post", "renta seguros")
 salario_sheets <- setdiff(sheet_names, excluded_sheets)
 
-# Crear una lista para almacenar los resultados
-resultados_list <- list()
+# Crear un dataframe para almacenar los resultados
+resultados <- data.frame(Tipo_Salario = character(), Suma_Cuotas = numeric(), stringsAsFactors = FALSE)
 
 # Loop a través de cada hoja de salario
 for (sheet in salario_sheets) {
@@ -42,21 +42,16 @@ for (sheet in salario_sheets) {
   names(salario_data)[1] <- "Fecha"
   names(salario_data)[2] <- "Salario" # Asumimos que el salario está en la segunda columna
   
-  # Extraer salario inicial y final de los datos originales
-  salarios_validos <- salario_data$Salario[!is.na(salario_data$Salario)]
-  salario_inicial <- if (length(salarios_validos) > 0) first(salarios_validos) else NA
-  salario_final <- if (length(salarios_validos) > 0) last(salarios_validos) else NA
-  
   # Unir datos de salario con el calendario de valor cuota
   datos_completos <- integra_calendario %>%
     left_join(salario_data, by = "Fecha")
-    
+  
   # Rellenar los valores de salario para los días no hábiles
   # Nota: El primer valor de salario puede ser NA si la serie empieza después, lo rellenamos con 0 o el primer valor válido.
   datos_completos <- datos_completos %>%
     fill(Salario, .direction = "down") %>%
     fill(Salario, .direction = "up") # Rellenar hacia arriba por si el primer día es NA
-
+  
   # Filtrar para obtener solo el último día de cada mes
   fin_de_mes <- datos_completos %>%
     mutate(year_month = format(Fecha, "%Y-%m")) %>%
@@ -64,28 +59,19 @@ for (sheet in salario_sheets) {
     filter(Fecha == max(Fecha)) %>%
     ungroup() %>%
     select(-year_month)
-    
+  
   # Calcular Aporte y Cuotas
   fin_de_mes <- fin_de_mes %>%
     mutate(
       aporte = Salario * 0.10,
       cuotas = aporte / !!sym(valor_integra_col)
     )
-    
+  
   # Calcular la suma total de cuotas y guardarla
   suma_total_cuotas <- sum(fin_de_mes$cuotas, na.rm = TRUE)
   
-  # Guardar resultados en la lista
-  resultados_list[[sheet]] <- data.frame(
-    Tipo_Salario = sheet, 
-    Suma_Cuotas = suma_total_cuotas,
-    Salario_Inicial = salario_inicial,
-    Salario_Final = salario_final
-  )
+  resultados <- rbind(resultados, data.frame(Tipo_Salario = sheet, Suma_Cuotas = suma_total_cuotas))
 }
-
-# Combinar la lista de dataframes en un solo dataframe
-resultados <- do.call(rbind, resultados_list)
 
 # Obtener el último valor de la cuota de Integra
 ultimo_valor_cuota <- tail(integra2[[valor_integra_col]], 1)
